@@ -12,6 +12,7 @@ POPULATION = 10693939
 POPULATION_SENIOR = 2131630
 TESTS_NEW_GUESSTIMATE = 0.9  # assume 90% of tests are new tests (not re-tests)
 PES_PERIOD = int(sys.argv[1])
+SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/releases/tag/v0.1.0"
 
 
 with open('osoby.min.json') as f:
@@ -193,4 +194,7 @@ for patch in patches:
     ax.add_patch(patch)
 
 fig.autofmt_xdate()
+fig.text(0.02, 0.02, "{:s}".format(SRC_LINK), fontsize='xx-small', color='gray')
+fig.text(0.95, 0.02, "CC0", fontsize='small', color='gray')
+
 plt.savefig('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), dpi=600)
