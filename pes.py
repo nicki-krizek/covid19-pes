@@ -2,11 +2,16 @@
 from collections import defaultdict
 from datetime import date, timedelta
 import json
+import sys
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 
 POPULATION = 10693939
 POPULATION_SENIOR = 2131630
 TESTS_NEW_GUESSTIMATE = 0.9  # assume 90% of tests are new tests (not re-tests)
+PES_PERIOD = int(sys.argv[1])
 
 
 with open('osoby.min.json') as f:
@@ -59,7 +64,7 @@ positivity_since = max(tests_since, cases_since)
 positivity_until = min(tests_until, cases_until)
 
 positivity_7d = {}
-for i in range((positivity_until - positivity_since).days):
+for i in range((positivity_until - positivity_since).days + 1):
     date = positivity_since + timedelta(days=i)
     positivity_7d[date] = cases_inc_7d[date] / (tests_inc_7d[date] * TESTS_NEW_GUESSTIMATE)
 
@@ -140,18 +145,52 @@ since = max(sorted(cases_new.keys())[0], sorted(tests_new.keys())[0]) + timedelt
 until = min(sorted(cases_new.keys())[-1], sorted(tests_new.keys())[-1])
 
 pes = {}
-for i in range((until - since).days):
+for i in range((until - since).days + 1):
     date = since + timedelta(days=i)
     repro = cases_inc_7d[date] / cases_inc_7d[date - timedelta(days=5)]
     prevalence = cases_inc_14d[date] / POPULATION * 100000
     prevalence_senior = cases_inc_14d_senior[date] / POPULATION_SENIOR * 100000
     prevalence_senior_prev = cases_inc_14d_senior[date - timedelta(days=7)] / POPULATION_SENIOR * 100000
 
-    pes[date] = (score_pes_prevalence(prevalence)
-                    + score_pes_senior(prevalence_senior, prevalence_senior_prev)
-                    + score_pes_repro(repro)
-                    + score_pes_positivity(positivity_7d[date],
+    vals = (score_pes_prevalence(prevalence),
+                 score_pes_senior(prevalence_senior, prevalence_senior_prev),
+                 score_pes_repro(repro),
+                 score_pes_positivity(positivity_7d[date],
                         positivity_7d[date - timedelta(days=7)]))
 
-for date, score in pes.items():
-    print(date, score)
+    pes[date] = (*vals, sum(vals))
+
+
+x = []
+for i in range(PES_PERIOD + 1):
+    x.append(until - timedelta(days=(PES_PERIOD - i)))
+
+
+y = list(pes[x][4] for x in x)
+
+print(x)
+print(y)
+
+
+fig, ax = plt.subplots(1)
+
+plt.title("PES (posledních {:d} dní k {:s})".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
+plt.xlabel("datum")
+plt.ylabel("skóre rizika (PES)")
+
+ax.set_ylim(0, 104)
+ax.plot(x, y)
+
+patches = [
+    Rectangle((0, 0), 1, 20/104, transform=ax.transAxes, facecolor="forestgreen", alpha=0.4),
+    Rectangle((0, 20/104), 1, 20/104, transform=ax.transAxes, facecolor="gold", alpha=0.4),
+    Rectangle((0, 40/104), 1, 20/104, transform=ax.transAxes, facecolor="darkorange", alpha=0.4),
+    Rectangle((0, 60/104), 1, 15/104, transform=ax.transAxes, facecolor="crimson", alpha=0.4),
+    Rectangle((0, 75/104), 1, 29/104, transform=ax.transAxes, facecolor="indigo", alpha=0.4),
+]
+
+for patch in patches:
+    ax.add_patch(patch)
+
+fig.autofmt_xdate()
+plt.savefig('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), dpi=600)
