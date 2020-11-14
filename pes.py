@@ -30,7 +30,7 @@ POPULATION = 10693939
 POPULATION_SENIOR = 2131630
 TESTS_NEW_GUESSTIMATE = 0.9  # assume 90% of tests are new tests (not re-tests)
 PES_PERIOD = int(sys.argv[1])
-SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/releases/tag/v0.2.0"
+SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.2.0"
 
 
 with open('osoby.min.json') as f:
