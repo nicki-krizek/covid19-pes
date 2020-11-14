@@ -18,10 +18,12 @@
 from collections import defaultdict
 from datetime import date, timedelta
 import json
+import math
 import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+from matplotlib.dates import MO, WeekdayLocator, AutoDateFormatter
 
 
 POPULATION = 10693939
@@ -189,7 +191,18 @@ def init_plot(x_vals):
     plt.xlabel("datum")
     plt.ylabel("index rizika (PES)")
 
-    ax.set_xlim(min(x_vals), max(x_vals))
+    min_x = min(x_vals)
+    max_x = max(x_vals)
+    interval = math.ceil((max_x - min_x).days / (13 * 7))
+    locator = WeekdayLocator(byweekday=MO, interval=interval)
+    formatter = AutoDateFormatter(locator)
+    minor_locator = WeekdayLocator(byweekday=MO)
+
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+    ax.xaxis.set_minor_locator(minor_locator)
+    ax.grid(which='major', axis='x', linestyle=':', lw=.5)
+    ax.set_xlim(min_x, max_x)
     ax.set_ylim(0, 104)
     ax.margins(0)
 
@@ -217,7 +230,7 @@ def line_plot(fpath, pes_vals, x_vals):
     plt.title("PES (posledních {:d} dní k {:s})".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
 
     y = [pes_vals[x][4] for x in x_vals]
-    ax.plot(x, y)
+    ax.plot(x, y, color='black')
 
     patches = [
         Rectangle((0, 0), 1, 20/104, transform=ax.transAxes, facecolor="forestgreen", alpha=0.4),
