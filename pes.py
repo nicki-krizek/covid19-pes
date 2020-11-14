@@ -169,13 +169,15 @@ for i in range((until - since).days + 1):
     repro = cases_inc_7d[date] / cases_inc_7d[date - timedelta(days=5)]
     prevalence = cases_inc_14d[date] / POPULATION * 100000
     prevalence_senior = cases_inc_14d_senior[date] / POPULATION_SENIOR * 100000
-    prevalence_senior_prev = cases_inc_14d_senior[date - timedelta(days=7)] / POPULATION_SENIOR * 100000
+    prevalence_senior_prev = \
+        cases_inc_14d_senior[date - timedelta(days=7)] / POPULATION_SENIOR * 100000
 
-    vals = (score_pes_prevalence(prevalence),
-                 score_pes_senior(prevalence_senior, prevalence_senior_prev),
-                 score_pes_repro(repro),
-                 score_pes_positivity(positivity_7d[date],
-                        positivity_7d[date - timedelta(days=7)]))
+    vals = (
+        score_pes_prevalence(prevalence),
+        score_pes_senior(prevalence_senior, prevalence_senior_prev),
+        score_pes_repro(repro),
+        score_pes_positivity(positivity_7d[date],
+                             positivity_7d[date - timedelta(days=7)]))
 
     pes[date] = (*vals, sum(vals))
 
@@ -232,12 +234,13 @@ def line_plot(fpath, pes_vals, x_vals):
     y = [pes_vals[x][4] for x in x_vals]
     ax.plot(x, y, color='black')
 
+    tr = ax.transAxes
     patches = [
-        Rectangle((0, 0), 1, 20/104, transform=ax.transAxes, facecolor="forestgreen", alpha=0.4),
-        Rectangle((0, 20/104), 1, 20/104, transform=ax.transAxes, facecolor="gold", alpha=0.4),
-        Rectangle((0, 40/104), 1, 20/104, transform=ax.transAxes, facecolor="darkorange", alpha=0.4),
-        Rectangle((0, 60/104), 1, 15/104, transform=ax.transAxes, facecolor="crimson", alpha=0.4),
-        Rectangle((0, 75/104), 1, 29/104, transform=ax.transAxes, facecolor="indigo", alpha=0.4),
+        Rectangle((0, 0), 1, 20/104, transform=tr, facecolor="forestgreen", alpha=0.4),
+        Rectangle((0, 20/104), 1, 20/104, transform=tr, facecolor="gold", alpha=0.4),
+        Rectangle((0, 40/104), 1, 20/104, transform=tr, facecolor="darkorange", alpha=0.4),
+        Rectangle((0, 60/104), 1, 15/104, transform=tr, facecolor="crimson", alpha=0.4),
+        Rectangle((0, 75/104), 1, 29/104, transform=tr, facecolor="indigo", alpha=0.4),
     ]
 
     for patch in patches:
@@ -255,12 +258,17 @@ def stacked_plot(fpath, pes_vals, x_vals):
     y2 = [pes_vals[x][2] for x in x_vals]
     y3 = [pes_vals[x][3] for x in x_vals]
 
-    plt.title("PES (posledních {:d} dní k {:s}) skládaný".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
+    plt.title("PES (posledních {:d} dní k {:s}) skládaný".format(
+        PES_PERIOD, until.strftime("%d.%m.%Y")))
 
     plot_collection = ax.stackplot(
         x_vals,
         y0, y1, y2, y3,
-        labels=('Počet pozitivních', 'Počet pozitivních seniorů', 'Reprodukční číslo', 'Pozitivita testů'),
+        labels=(
+            'Počet pozitivních',
+            'Počet pozitivních seniorů',
+            'Reprodukční číslo',
+            'Pozitivita testů'),
         colors=('mediumblue', 'royalblue', 'deepskyblue', 'cyan'),
     )
     cumulative_line = ax.plot(x_vals, y, color='black', label='Celkem')
@@ -268,6 +276,7 @@ def stacked_plot(fpath, pes_vals, x_vals):
     plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left')
 
     plt.savefig(fpath, dpi=600)
+
 
 line_plot('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), pes, x)
 stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(PES_PERIOD, str(until)), pes, x)
