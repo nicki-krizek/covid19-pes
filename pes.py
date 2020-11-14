@@ -265,15 +265,15 @@ def stacked_plot(fpath, pes_vals, x_vals):
         x_vals,
         y0, y1, y2, y3,
         labels=(
-            'Počet pozitivních',
-            'Počet pozitivních seniorů',
-            'Reprodukční číslo',
-            'Pozitivita testů'),
+            'Body za počet pozitivních',
+            'Body za počet pozitivních seniorů',
+            'Body za reprodukční číslo',
+            'Body za pozitivitu testů'),
         colors=('mediumblue', 'royalblue', 'deepskyblue', 'cyan'),
     )
     cumulative_line = ax.plot(x_vals, y, color='black', label='Celkem')
 
-    plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left')
+    plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left', fontsize='xx-small')
 
     plt.savefig(fpath, dpi=600)
 
