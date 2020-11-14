@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+import csv
 from datetime import date, timedelta
 import json
 import math
@@ -26,11 +27,25 @@ from matplotlib.patches import Rectangle
 from matplotlib.dates import MO, WeekdayLocator, AutoDateFormatter
 
 
-POPULATION = 10693939
-POPULATION_SENIOR = 2131630
 TESTS_NEW_GUESSTIMATE = 0.9  # assume 90% of tests are new tests (not re-tests)
 PES_PERIOD = int(sys.argv[1])
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.2.0"
+
+ALL_LABEL = 'Celá ČR'
+
+
+def load_population(fpath):
+    population = {}
+    Population = namedtuple('Population', ['total', 'senior'])
+    with open(fpath) as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            population[row['misto']] = Population(
+                int(row['obyvatele']), int(row['obyvatele_65']))
+    population[ALL_LABEL] = Population(
+        sum([pop.total for pop in population.values()]),
+        sum([pop.senior for pop in population.values()]))
+    return population
 
 
 with open('osoby.min.json') as f:
@@ -162,15 +177,16 @@ def score_pes_positivity(positivity, positivity_prev):
 
 since = max(sorted(cases_new.keys())[0], sorted(tests_new.keys())[0]) + timedelta(days=21)
 until = min(sorted(cases_new.keys())[-1], sorted(tests_new.keys())[-1])
+population = load_population('data/obyvatele.csv')
 
 pes = {}
 for i in range((until - since).days + 1):
     date = since + timedelta(days=i)
     repro = cases_inc_7d[date] / cases_inc_7d[date - timedelta(days=5)]
-    prevalence = cases_inc_14d[date] / POPULATION * 100000
-    prevalence_senior = cases_inc_14d_senior[date] / POPULATION_SENIOR * 100000
+    prevalence = cases_inc_14d[date] / population[ALL_LABEL].total * 100000
+    prevalence_senior = cases_inc_14d_senior[date] / population[ALL_LABEL].senior * 100000
     prevalence_senior_prev = \
-        cases_inc_14d_senior[date - timedelta(days=7)] / POPULATION_SENIOR * 100000
+        cases_inc_14d_senior[date - timedelta(days=7)] / population[ALL_LABEL].senior * 100000
 
     vals = (
         score_pes_prevalence(prevalence),
