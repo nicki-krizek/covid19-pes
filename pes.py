@@ -289,7 +289,10 @@ def stacked_plot(fpath, pes_vals, x_vals):
     )
     cumulative_line = ax.plot(x_vals, y, color='black', label='Celkem')
 
-    plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left', fontsize='xx-small')
+    plt.legend(
+        handles=(plot_collection + cumulative_line)[::-1],
+        loc='upper left',
+        fontsize='xx-small')
 
     plt.savefig(fpath, dpi=600)
 
