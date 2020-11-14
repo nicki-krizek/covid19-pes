@@ -214,3 +214,41 @@ fig.text(0.02, 0.02, "{:s}".format(SRC_LINK), fontsize='xx-small', color='gray')
 fig.text(0.95, 0.02, "CC0", fontsize='small', color='gray')
 
 plt.savefig('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), dpi=600)
+
+def stacked_plot(fpath, pes_vals, x_vals):
+    y = [pes_vals[x][4] for x in x_vals]
+    y0 = [pes_vals[x][0] for x in x_vals]
+    y1 = [pes_vals[x][1] for x in x_vals]
+    y2 = [pes_vals[x][2] for x in x_vals]
+    y3 = [pes_vals[x][3] for x in x_vals]
+
+    fig, ax = plt.subplots(1)
+
+    plt.title("PES (posledních {:d} dní k {:s}) skládaný".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
+    plt.xlabel("datum")
+    plt.ylabel("skóre rizika (PES)")
+
+    ax.set_ylim(0, 104)
+    plot_collection = ax.stackplot(
+        x,
+        y0, y1, y2, y3,
+        labels=('Počet pozitivních', 'Počet pozitivních seniorů', 'Reprodukční číslo', 'Pozitivita testů'),
+        colors=('rosybrown', 'lightcoral', 'indianred', 'firebrick'),
+    )
+    cumulative_line = ax.plot(x, y, color='black', label='Spolu')
+
+    # PES levels
+    ax.plot(x, [75] * len(x), color='indigo', linestyle=':')
+    ax.plot(x, [60] * len(x), color='crimson', linestyle=':')
+    ax.plot(x, [40] * len(x), color='darkorange', linestyle=':')
+    ax.plot(x, [20] * len(x), color='gold', linestyle=':')
+
+    plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left')
+
+    fig.autofmt_xdate()
+    fig.text(0.02, 0.02, "{:s}".format(SRC_LINK), fontsize='xx-small', color='gray')
+    fig.text(0.95, 0.02, "CC0", fontsize='small', color='gray')
+
+    plt.savefig(fpath, dpi=600)
+
+stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(PES_PERIOD, str(until)), pes, x)
