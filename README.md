@@ -3,7 +3,6 @@
 ## Upozornění
 
 - **Ve výpočtu mohou být chyby, za výsledky neručím**
-- **Verze 0.1.0 je velice rychlý prototyp**
 - **Otevřená data nejsou tak přesná, takže ani výsledné skóre nemůže být tak přesné jako od MZČR/ÚZIS**
 
 ## Situace k 12.11.2020
@@ -25,8 +24,8 @@
 Projekt vyžaduje Python 3 a matplotlib.
 
 ```
-wget https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/testy.min.json
-wget https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.min.json
+curl -O https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/testy.min.json
+curl -O https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.min.json
 ./pes.py 60
 ```
 
