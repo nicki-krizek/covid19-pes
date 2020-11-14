@@ -12,6 +12,10 @@
 
 ![PES 60d 2020-11-12](img/pes_60d_2020-11-12.png)
 
+### Posledních 60 dní - skládaný
+
+![PES 60d 2020-11-12](img/pes_60d_2020-11-12_skladany.png)
+
 ### Posledních 235 dní
 
 ![PES 235d 2020-11-12](img/pes_235d_2020-11-12.png)
