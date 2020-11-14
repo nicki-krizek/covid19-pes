@@ -228,20 +228,21 @@ def stacked_plot(fpath, pes_vals, x_vals):
     plt.xlabel("datum")
     plt.ylabel("skóre rizika (PES)")
 
+    ax.margins(0)
     ax.set_ylim(0, 104)
     plot_collection = ax.stackplot(
         x,
         y0, y1, y2, y3,
         labels=('Počet pozitivních', 'Počet pozitivních seniorů', 'Reprodukční číslo', 'Pozitivita testů'),
-        colors=('rosybrown', 'lightcoral', 'indianred', 'firebrick'),
+        colors=('mediumblue', 'royalblue', 'deepskyblue', 'cyan'),
     )
-    cumulative_line = ax.plot(x, y, color='black', label='Spolu')
+    cumulative_line = ax.plot(x, y, color='black', label='Celkem')
 
     # PES levels
-    ax.plot(x, [75] * len(x), color='indigo', linestyle=':')
-    ax.plot(x, [60] * len(x), color='crimson', linestyle=':')
-    ax.plot(x, [40] * len(x), color='darkorange', linestyle=':')
-    ax.plot(x, [20] * len(x), color='gold', linestyle=':')
+    ax.axhline(75, color='indigo', linestyle='--')
+    ax.axhline(60, color='crimson', linestyle='--')
+    ax.axhline(40, color='darkorange', linestyle='--')
+    ax.axhline(20, color='gold', linestyle='--')
 
     plt.legend(handles=(plot_collection + cumulative_line)[::-1], loc='upper left')
 
