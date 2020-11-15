@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.dates import MO, WeekdayLocator, AutoDateFormatter
 
+plt.rcParams['savefig.dpi'] = 200
 
 # TODO configurable guesstimate?
 TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
@@ -208,7 +209,7 @@ def line_plot(fpath, pes_vals, x_vals, until):
     for patch in patches:
         ax.add_patch(patch)
 
-    plt.savefig(fpath, dpi=600)
+    plt.savefig(fpath)
 
 
 def stacked_plot(fpath, pes_vals, x_vals, until):
@@ -240,7 +241,7 @@ def stacked_plot(fpath, pes_vals, x_vals, until):
         loc='upper left',
         fontsize='xx-small')
 
-    plt.savefig(fpath, dpi=600)
+    plt.savefig(fpath)
 
 
 def load_population(fpath):
