@@ -80,9 +80,9 @@ class Pes:
             self.score_incidence_senior += 2
 
         self.repro = region_data[day].incidence7.all / region_data[day_prev5].incidence7.all
-        self.score_repro = self._score_pes_repro(self.repro)
+        self.score_repro = self._score_repro(self.repro)
 
-        self.score_positivity = self._score_pes_positivity(region_data[day].positivity)
+        self.score_positivity = self._score_positivity(region_data[day].positivity)
         if region_data[day].positivity > region_data[day_prev7].positivity:
             self.score_positivity += 2
 
@@ -113,7 +113,7 @@ class Pes:
         return 20
 
     @classmethod
-    def _score_pes_repro(cls, repro):
+    def _score_repro(cls, repro):
         if repro < 0.8:
             return 0
         if repro < 1.0:
@@ -129,7 +129,7 @@ class Pes:
         return 30
 
     @classmethod
-    def _score_pes_positivity(cls, positivity):
+    def _score_positivity(cls, positivity):
         if positivity < 0.03:
             return 0
         if positivity < 0.07:
