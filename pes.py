@@ -294,7 +294,7 @@ def main():
 
     pes = {}
     x_dates = []
-    until = date.fromisoformat('2020-11-12')  # TODO obtain date from dataset
+    until = max(data[ALL_LABEL].keys()) - timedelta(days=1)  # ignore last (incomplete) day
     since = until - timedelta(days=PES_PERIOD)
     region = ALL_LABEL  # TODO get region from arg
 
