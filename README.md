@@ -24,8 +24,6 @@
 Projekt vyžaduje Python 3 a matplotlib.
 
 ```
-curl -O https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/testy.min.json
-curl -O https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.min.json
 ./pes.py 60
 ```
 

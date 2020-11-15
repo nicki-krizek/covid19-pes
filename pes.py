@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 import csv
 from datetime import date, timedelta
-import json
 import math
 import sys
 
@@ -27,180 +26,125 @@ from matplotlib.patches import Rectangle
 from matplotlib.dates import MO, WeekdayLocator, AutoDateFormatter
 
 
-TESTS_NEW_GUESSTIMATE = 0.9  # assume 90% of tests are new tests (not re-tests)
-PES_PERIOD = int(sys.argv[1])
-SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.2.0"
-
+# TODO configurable guesstimate?
+TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
+PES_PERIOD = int(sys.argv[1])  # TODO use argparse
+SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.3.0"  # TODO release 0.3.0
 ALL_LABEL = 'Celá ČR'
 
 
-def load_population(fpath):
-    population = {}
-    Population = namedtuple('Population', ['total', 'senior'])
-    with open(fpath) as f:
-        reader = csv.DictReader(f, delimiter=';')
-        for row in reader:
-            population[row['misto']] = Population(
-                int(row['obyvatele']), int(row['obyvatele_65']))
-    population[ALL_LABEL] = Population(
-        sum([pop.total for pop in population.values()]),
-        sum([pop.senior for pop in population.values()]))
-    return population
+AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
 
 
-with open('osoby.min.json') as f:
-    in_people = json.load(f)
+class EpidemicData:
+    def __init__(self, incidence7=0, incidence7_65=0, tests7=0):
+        self.incidence7 = AgeGroup(incidence7, incidence7_65)
+        self.tests7 = tests7
 
-with open('testy.min.json') as f:
-    in_tests = json.load(f)
+    @property
+    def positivity(self):
+        if self.tests7 == 0:
+            return 0
+        return self.incidence7.all / (self.tests7 * TESTS_NEW_GUESSTIMATE)
 
-cases_new = defaultdict(int)
-cases_new_senior = defaultdict(int)
-tests_new = defaultdict(int)
+    def __add__(self, other):
+        return EpidemicData(
+            self.incidence7.all + other.incidence7.all,
+            self.incidence7.senior + other.incidence7.senior,
+            self.tests7 + other.tests7)
 
-for entry in in_people['data']:
-    date = date.fromisoformat(entry['datum'])
-    cases_new[date] += 1
-
-    if entry['vek'] >= 65:
-        cases_new_senior[date] += 1
-
-for entry in in_tests['data']:
-    date = date.fromisoformat(entry['datum'])
-    tests_new[date] = entry['prirustkovy_pocet_testu']
-
-cases_inc_7d = defaultdict(int)
-cases_inc_14d = defaultdict(int)
-cases_inc_14d_senior = defaultdict(int)
-
-for date, n in cases_new.items():
-    for i in range(7):
-        cases_inc_7d[date + timedelta(days=i)] += n
-    for i in range(14):
-        cases_inc_14d[date + timedelta(days=i)] += n
-
-for date, n in cases_new_senior.items():
-    for i in range(14):
-        cases_inc_14d_senior[date + timedelta(days=i)] += n
+    def __str__(self):
+        return (
+            "incidence7: {s.incidence7.all:d}, "
+            "incidence7_senior: {s.incidence7.senior:d}, "
+            "tests7: {s.tests7:d}, "
+            "positivity: {s.positivity:.2f}").format(s=self)
 
 
-tests_inc_7d = defaultdict(int)
-for date, n in tests_new.items():
-    for i in range(7):
-        tests_inc_7d[date + timedelta(days=i)] += n
+class Pes:
+    def __init__(self, day, region_data, region_population):
+        day_prev5 = day - timedelta(days=5)
+        day_prev7 = day - timedelta(days=7)
+        day_prev14 = day - timedelta(days=14)
 
+        self.population = region_population
 
-tests_since = sorted(tests_inc_7d.keys())[0] + timedelta(days=7)
-tests_until = sorted(tests_inc_7d.keys())[-1]
-cases_since = sorted(cases_inc_7d.keys())[0] + timedelta(days=7)
-cases_until = sorted(cases_inc_7d.keys())[-1]
-positivity_since = max(tests_since, cases_since)
-positivity_until = min(tests_until, cases_until)
+        self.incidence14 = (region_data[day] + region_data[day_prev7]).incidence7
+        self.incidence14_prev7 = (region_data[day_prev7] + region_data[day_prev14]).incidence7
 
-positivity_7d = {}
-for i in range((positivity_until - positivity_since).days + 1):
-    date = positivity_since + timedelta(days=i)
-    positivity_7d[date] = cases_inc_7d[date] / (tests_inc_7d[date] * TESTS_NEW_GUESSTIMATE)
+        self.score_incidence_all = self._score_incidence(
+            self.incidence14.all / self.population.all * 100000)
+        self.score_incidence_senior = self._score_incidence(
+            self.incidence14.senior / self.population.senior * 100000)
+        if self.incidence14.senior > self.incidence14_prev7.senior:
+            self.score_incidence_senior += 2
 
+        self.repro = region_data[day].incidence7.all / region_data[day_prev5].incidence7.all
+        self.score_repro = self._score_pes_repro(self.repro)
 
-def score_pes_prevalence(prevalence):
-    if prevalence < 10:
-        return 0
-    if prevalence < 25:
-        return 2
-    if prevalence < 50:
-        return 4
-    if prevalence < 120:
-        return 7
-    if prevalence < 240:
-        return 10
-    if prevalence < 480:
-        return 13
-    if prevalence < 960:
-        return 16
-    return 20
+        self.score_positivity = self._score_pes_positivity(region_data[day].positivity)
+        if region_data[day].positivity > region_data[day_prev7].positivity:
+            self.score_positivity += 2
 
+    @property
+    def score(self):
+        return (
+            self.score_incidence_all +
+            self.score_incidence_senior +
+            self.score_repro +
+            self.score_positivity)
 
-def score_pes_senior(prevalence_senior, prevalence_senior_prev):
-    extra = 0 if prevalence_senior <= prevalence_senior_prev else 2
-    if prevalence_senior < 10:
-        return 0 + extra
-    if prevalence_senior < 25:
-        return 2 + extra
-    if prevalence_senior < 50:
-        return 4 + extra
-    if prevalence_senior < 120:
-        return 7 + extra
-    if prevalence_senior < 240:
-        return 10 + extra
-    if prevalence_senior < 480:
-        return 13 + extra
-    if prevalence_senior < 960:
-        return 16 + extra
-    return 20 + extra
-
-
-def score_pes_repro(repro):
-    if repro < 0.8:
-        return 0
-    if repro < 1.0:
-        return 5
-    if repro < 1.2:
-        return 10
-    if repro < 1.4:
-        return 15
-    if repro < 1.6:
+    @classmethod
+    def _score_incidence(cls, incidence_per_100k):
+        if incidence_per_100k < 10:
+            return 0
+        if incidence_per_100k < 25:
+            return 2
+        if incidence_per_100k < 50:
+            return 4
+        if incidence_per_100k < 120:
+            return 7
+        if incidence_per_100k < 240:
+            return 10
+        if incidence_per_100k < 480:
+            return 13
+        if incidence_per_100k < 960:
+            return 16
         return 20
-    if repro < 1.9:
-        return 25
-    return 30
 
+    @classmethod
+    def _score_pes_repro(cls, repro):
+        if repro < 0.8:
+            return 0
+        if repro < 1.0:
+            return 5
+        if repro < 1.2:
+            return 10
+        if repro < 1.4:
+            return 15
+        if repro < 1.6:
+            return 20
+        if repro < 1.9:
+            return 25
+        return 30
 
-def score_pes_positivity(positivity, positivity_prev):
-    extra = 0 if positivity <= positivity_prev else 2
-    if positivity < 0.03:
-        return 0 + extra
-    if positivity < 0.07:
-        return 3 + extra
-    if positivity < 0.11:
-        return 7 + extra
-    if positivity < 0.15:
-        return 11 + extra
-    if positivity < 0.19:
-        return 15 + extra
-    if positivity < 0.23:
-        return 20 + extra
-    if positivity < 0.26:
-        return 25 + extra
-    return 30 + extra
-
-
-since = max(sorted(cases_new.keys())[0], sorted(tests_new.keys())[0]) + timedelta(days=21)
-until = min(sorted(cases_new.keys())[-1], sorted(tests_new.keys())[-1])
-population = load_population('data/obyvatele.csv')
-
-pes = {}
-for i in range((until - since).days + 1):
-    date = since + timedelta(days=i)
-    repro = cases_inc_7d[date] / cases_inc_7d[date - timedelta(days=5)]
-    prevalence = cases_inc_14d[date] / population[ALL_LABEL].total * 100000
-    prevalence_senior = cases_inc_14d_senior[date] / population[ALL_LABEL].senior * 100000
-    prevalence_senior_prev = \
-        cases_inc_14d_senior[date - timedelta(days=7)] / population[ALL_LABEL].senior * 100000
-
-    vals = (
-        score_pes_prevalence(prevalence),
-        score_pes_senior(prevalence_senior, prevalence_senior_prev),
-        score_pes_repro(repro),
-        score_pes_positivity(positivity_7d[date],
-                             positivity_7d[date - timedelta(days=7)]))
-
-    pes[date] = (*vals, sum(vals))
-
-
-x = []
-for i in range(PES_PERIOD + 1):
-    x.append(until - timedelta(days=(PES_PERIOD - i)))
+    @classmethod
+    def _score_pes_positivity(cls, positivity):
+        if positivity < 0.03:
+            return 0
+        if positivity < 0.07:
+            return 3
+        if positivity < 0.11:
+            return 7
+        if positivity < 0.15:
+            return 11
+        if positivity < 0.19:
+            return 15
+        if positivity < 0.23:
+            return 20
+        if positivity < 0.26:
+            return 25
+        return 30
 
 
 def init_plot(x_vals):
@@ -243,12 +187,14 @@ def init_plot(x_vals):
     return fig, ax
 
 
-def line_plot(fpath, pes_vals, x_vals):
+# TODO reorder args, remove until?
+def line_plot(fpath, pes_vals, x_vals, until):
     fig, ax = init_plot(x_vals)
+    # TODO change title, include region
     plt.title("PES (posledních {:d} dní k {:s})".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
 
-    y = [pes_vals[x][4] for x in x_vals]
-    ax.plot(x, y, color='black')
+    y = [pes_vals[x].score for x in x_vals]
+    ax.plot(x_vals, y, color='black')
 
     tr = ax.transAxes
     patches = [
@@ -265,14 +211,14 @@ def line_plot(fpath, pes_vals, x_vals):
     plt.savefig(fpath, dpi=600)
 
 
-def stacked_plot(fpath, pes_vals, x_vals):
+def stacked_plot(fpath, pes_vals, x_vals, until):
     fig, ax = init_plot(x_vals)
 
-    y = [pes_vals[x][4] for x in x_vals]
-    y0 = [pes_vals[x][0] for x in x_vals]
-    y1 = [pes_vals[x][1] for x in x_vals]
-    y2 = [pes_vals[x][2] for x in x_vals]
-    y3 = [pes_vals[x][3] for x in x_vals]
+    y = [pes_vals[x].score for x in x_vals]
+    y0 = [pes_vals[x].score_incidence_all for x in x_vals]
+    y1 = [pes_vals[x].score_incidence_senior for x in x_vals]
+    y2 = [pes_vals[x].score_repro for x in x_vals]
+    y3 = [pes_vals[x].score_positivity for x in x_vals]
 
     plt.title("PES (posledních {:d} dní k {:s}) skládaný".format(
         PES_PERIOD, until.strftime("%d.%m.%Y")))
@@ -297,5 +243,57 @@ def stacked_plot(fpath, pes_vals, x_vals):
     plt.savefig(fpath, dpi=600)
 
 
-line_plot('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), pes, x)
-stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(PES_PERIOD, str(until)), pes, x)
+def load_population(fpath):
+    population = {}
+    with open(fpath) as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            population[row['misto']] = AgeGroup(
+                int(row['obyvatele']), int(row['obyvatele_65']))
+    population[ALL_LABEL] = AgeGroup(
+        sum([pop.all for pop in population.values()]),
+        sum([pop.senior for pop in population.values()]))
+    return population
+
+
+def load_epidemic_data(fpath):
+    data = {}
+    with open(fpath) as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            orp_data = data.setdefault(row['orp_nazev'], {})
+            today = date.fromisoformat(row['datum'])
+            orp_data[today] = EpidemicData(
+                int(row['incidence_7']),
+                int(row['incidence_65_7']),
+                int(row['testy_7']))
+    all_cr = {}
+    for orp, orp_data in data.items():
+        for today, today_orp in orp_data.items():
+            today_cr = all_cr.get(today, EpidemicData())
+            all_cr[today] = today_cr + today_orp
+    data[ALL_LABEL] = all_cr
+    return data
+
+
+def main():
+    data = load_epidemic_data('data/covid_orp.csv')  # TODO (optionally) fetch from URL?
+    population = load_population('data/obyvatele.csv')
+
+    pes = {}
+    x_dates = []
+    until = date.fromisoformat('2020-11-12')  # TODO obtain date from dataset
+    since = until - timedelta(days=PES_PERIOD)
+    region = ALL_LABEL  # TODO get region from arg
+
+    for i in range((until - since).days + 1):
+        today = since + timedelta(days=i)
+        x_dates.append(today)
+        pes[today] = Pes(today, data[region], population[region])
+
+    line_plot('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), pes, x_dates, until)
+    stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(PES_PERIOD, str(until)), pes, x_dates, until)
+
+
+if __name__ == '__main__':
+    main()
