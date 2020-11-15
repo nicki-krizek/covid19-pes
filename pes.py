@@ -24,7 +24,7 @@ import urllib.request
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from matplotlib.dates import MO, WeekdayLocator, AutoDateFormatter
+from matplotlib.dates import WE, WeekdayLocator, AutoDateFormatter
 
 plt.rcParams['savefig.dpi'] = 200
 
@@ -161,9 +161,9 @@ def init_plot(x_vals):
     min_x = min(x_vals)
     max_x = max(x_vals)
     interval = math.ceil((max_x - min_x).days / (13 * 7))
-    locator = WeekdayLocator(byweekday=MO, interval=interval)
+    locator = WeekdayLocator(byweekday=WE, interval=interval)
     formatter = AutoDateFormatter(locator)
-    minor_locator = WeekdayLocator(byweekday=MO)
+    minor_locator = WeekdayLocator(byweekday=WE)
 
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(formatter)
