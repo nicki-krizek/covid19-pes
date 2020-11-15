@@ -20,6 +20,7 @@ import csv
 from datetime import date, timedelta
 import math
 import sys
+import urllib.request
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -31,6 +32,9 @@ plt.rcParams['savefig.dpi'] = 200
 TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
 PES_PERIOD = int(sys.argv[1])  # TODO use argparse
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.3.0"  # TODO release 0.3.0
+DATA_FILEPATH = 'data/covid_orp.csv'
+POPULATION_FILEPATH = 'data/obyvatele.csv'
+DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv'  # noqa
 ALL_LABEL = 'Celá ČR'
 
 
@@ -277,9 +281,16 @@ def load_epidemic_data(fpath):
     return data
 
 
+def fetch_epidemic_data(out_fpath):
+    with urllib.request.urlopen(DATA_URL) as in_file:
+        with open(out_fpath, 'b+w') as out_file:
+            out_file.write(in_file.read())
+
+
 def main():
-    data = load_epidemic_data('data/covid_orp.csv')  # TODO (optionally) fetch from URL?
-    population = load_population('data/obyvatele.csv')
+    fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
+    data = load_epidemic_data(DATA_FILEPATH)
+    population = load_population(POPULATION_FILEPATH)
 
     pes = {}
     x_dates = []
