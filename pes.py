@@ -382,7 +382,8 @@ def configure_logger():
 
 def main():
     parser = ArgumentParser(description='generate PES score chart')
-    parser.add_argument('days', type=int, default=60, help='number of past days to plot')
+    parser.add_argument('days', type=int, default=0, nargs='?',
+                        help='number of past days to plot')
     parser.add_argument(
         '--region', type=str, default=ALL_LABEL, help='limit data to selected region')
     args = parser.parse_args()
@@ -400,9 +401,17 @@ def main():
 
     pes = {}
     x_dates = []
-    until = max(data[args.region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
-    since = until - timedelta(days=args.days)
     region = args.region
+
+    until = max(data[args.region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
+    min_since = min(data[args.region].keys()) + timedelta(days=14)
+    if args.days == 0:
+        since = min_since
+    else:
+        since = until - timedelta(days=args.days)
+        if since < min_since:
+            raise PesValueError("Not enough historical data. Max days: {:d}".format(
+                (until - min_since).days))
 
     for i in range((until - since).days + 1):
         today = since + timedelta(days=i)
