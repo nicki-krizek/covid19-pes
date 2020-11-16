@@ -408,7 +408,7 @@ def main():
     for i in range((until - since).days + 1):
         today = since + timedelta(days=i)
         x_dates.append(today)
-        pes[today] = Pes(today, data[region], population[region])
+        pes[today] = Pes(today, data[region], population[FIX_POPULATION_KEYMAP.get(region, region)])
 
     line_plot('pes_{:d}d_{:s}_{:s}.png'.format(
         args.days, args.region, str(until)), pes, x_dates, until, args.region)
