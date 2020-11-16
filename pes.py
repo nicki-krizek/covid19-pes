@@ -19,9 +19,9 @@ from argparse import ArgumentParser
 from collections import namedtuple
 import csv
 from datetime import date, timedelta
+import logging
 import math
 import urllib.request
-import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -39,6 +39,9 @@ ALL_LABEL = 'Celá ČR'
 
 
 AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
+
+
+logger = logging.getLogger('PES')
 
 
 class PesError(Exception):
@@ -221,6 +224,7 @@ def line_plot(fpath, pes_vals, x_vals, until, region):
     for patch in patches:
         ax.add_patch(patch)
 
+    logger.info('Plotting into file %s', fpath)
     plt.savefig(fpath)
 
 
@@ -253,6 +257,7 @@ def stacked_plot(fpath, pes_vals, x_vals, until, region):
         loc='upper left',
         fontsize='xx-small')
 
+    logger.info('Plotting stacked plot into file %s', fpath)
     plt.savefig(fpath)
 
 
@@ -295,12 +300,17 @@ def fetch_epidemic_data(out_fpath):
             out_file.write(in_file.read())
 
 
+def configure_logger():
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+
+
 def main():
     parser = ArgumentParser(description='generate PES score chart')
     parser.add_argument('days', type=int, default=60, help='number of past days to plot')
     parser.add_argument(
         '--region', type=str, default=ALL_LABEL, help='limit data to selected region')
     args = parser.parse_args()
+    configure_logger()
 
     #fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
     data = load_epidemic_data(DATA_FILEPATH)
@@ -332,4 +342,4 @@ if __name__ == '__main__':
     try:
         main()
     except PesError as exc:
-        print(f"PES error: {exc}", file=sys.stderr)
+        logger.error(exc)
