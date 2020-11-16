@@ -371,6 +371,7 @@ def load_epidemic_data(fpath):
 
 
 def fetch_epidemic_data(out_fpath):
+    logger.info(f"Downloding {DATA_URL} to {out_fpath}")
     with urllib.request.urlopen(DATA_URL) as in_file:
         with open(out_fpath, 'b+w') as out_file:
             out_file.write(in_file.read())
@@ -386,10 +387,13 @@ def main():
                         help='number of past days to plot')
     parser.add_argument(
         '--region', type=str, default=ALL_LABEL, help='limit data to selected region')
+    parser.add_argument(
+        '--fetch', action='store_true', help='download updated dataset')
     args = parser.parse_args()
     configure_logger()
 
-    # fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
+    if args.fetch:
+        fetch_epidemic_data(DATA_FILEPATH)
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
