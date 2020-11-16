@@ -21,6 +21,7 @@ import csv
 from datetime import date, timedelta
 import math
 import urllib.request
+import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -38,6 +39,14 @@ ALL_LABEL = 'Celá ČR'
 
 
 AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
+
+
+class PesError(Exception):
+    pass
+
+
+class PesValueError(PesError):
+    pass
 
 
 class EpidemicData:
@@ -297,6 +306,11 @@ def main():
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
+    if args.region != ALL_LABEL and args.region not in data:
+        raise PesValueError(
+            f'"{args.region}" is not a valid region name. Available regions: {", ".join(sorted(data))}'
+        )
+
     pes = {}
     x_dates = []
     until = max(data[args.region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
@@ -315,4 +329,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except PesError as exc:
+        print(f"PES error: {exc}", file=sys.stderr)
