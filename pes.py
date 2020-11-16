@@ -37,10 +37,6 @@ POPULATION_FILEPATH = 'data/obyvatele.csv'
 DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv'  # noqa
 ALL_LABEL = 'Celá ČR'
 
-FIX_POPULATION_KEYMAP = {
-    "Brandýs n.L.- St.Boleslav": "Brandýs nad Labem-Stará Boleslav",
-}
-
 
 AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
 
@@ -306,7 +302,7 @@ def plot_current_index_per_region_bar(data, population, num=10, extra_region=ALL
     }
 
     region_pes = [
-        (region, Pes(last_day, data[region], population[FIX_POPULATION_KEYMAP.get(region, region)]))
+        (region, Pes(last_day, data[region], population[region]))
         for region, last_day in region_last.items()
     ]
     region_pes_sorted = sorted(region_pes, key=lambda x: x[1].score)
@@ -408,7 +404,7 @@ def main():
     for i in range((until - since).days + 1):
         today = since + timedelta(days=i)
         x_dates.append(today)
-        pes[today] = Pes(today, data[region], population[FIX_POPULATION_KEYMAP.get(region, region)])
+        pes[today] = Pes(today, data[region], population[region])
 
     line_plot('pes_{:d}d_{:s}_{:s}.png'.format(
         args.days, args.region, str(until)), pes, x_dates, until, args.region)
