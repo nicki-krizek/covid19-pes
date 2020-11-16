@@ -179,7 +179,7 @@ def init_plot(x_vals):
     fig, ax = plt.subplots(1)
 
     plt.xlabel("datum")
-    plt.ylabel("index rizika (PES)")
+    plt.ylabel("index rizika")
 
     min_x = min(x_vals)
     max_x = max(x_vals)
@@ -204,6 +204,7 @@ def init_plot(x_vals):
     colors = ["black", "forestgreen", "gold", "darkorange", "crimson", "indigo"]
     for ytick, color in zip(ax.get_yticklabels(), colors):
         plt.setp(ytick, color=color)
+    ax.set_yticks([10, 30, 50, 70, 80, 90], minor=True)
 
     # PES levels
     # ax.axhline(100, color='indigo', linestyle='--')
