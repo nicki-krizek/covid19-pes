@@ -162,6 +162,7 @@ class Pes:
             return 25
         return 30
 
+
 def score_color(score):
     if score > 75:
         return "indigo"
@@ -279,7 +280,7 @@ def stacked_plot(fpath, pes_vals, x_vals, until, region):
 def plot_current_index_per_region_bar(data, population, num=10, extra_region=ALL_LABEL):
 
     def add_if_missing(list_, entry):
-        if not any(l[0] == entry[0] for l in list_):
+        if not any(val[0] == entry[0] for val in list_):
             list_.append(entry)
 
     def add_value_to_bars(bars):
@@ -386,13 +387,14 @@ def main():
     args = parser.parse_args()
     configure_logger()
 
-    #fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
+    # fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
     if args.region != ALL_LABEL and args.region not in data:
         raise PesValueError(
-            f'"{args.region}" is not a valid region name. Available regions: {", ".join(sorted(data))}'
+            f'"{args.region}" is not a valid region name. '
+            f'Available regions: {", ".join(sorted(data))}'
         )
 
     pes = {}
