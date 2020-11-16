@@ -19,6 +19,10 @@
 
 ![PES 235d 2020-11-12](img/pes_235d_2020-11-12.png)
 
+### Pes podle regionu
+
+![PES Podle regionu 2020-11-15](img/pes_podle_regionu_15.11.2020.png)
+
 ## Použití
 
 Projekt vyžaduje Python 3 a matplotlib.

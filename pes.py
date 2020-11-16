@@ -163,6 +163,18 @@ class Pes:
         return 30
 
 
+def score_color(score):
+    if score > 75:
+        return "indigo"
+    if score > 60:
+        return "crimson"
+    if score > 40:
+        return "darkorange"
+    if score > 10:
+        return "gold"
+    return "forestgreen"
+
+
 def init_plot(x_vals):
     fig, ax = plt.subplots(1)
 
@@ -171,16 +183,20 @@ def init_plot(x_vals):
 
     min_x = min(x_vals)
     max_x = max(x_vals)
-    interval = math.ceil((max_x - min_x).days / (13 * 7))
-    locator = WeekdayLocator(byweekday=WE, interval=interval)
-    formatter = AutoDateFormatter(locator)
-    minor_locator = WeekdayLocator(byweekday=WE)
 
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    ax.xaxis.set_minor_locator(minor_locator)
-    ax.grid(which='major', axis='x', linestyle=':', lw=.5)
-    ax.set_xlim(min_x, max_x)
+    if isinstance(min_x, date):
+        # format only for dates
+        interval = math.ceil((max_x - min_x).days / (13 * 7))
+        locator = WeekdayLocator(byweekday=WE, interval=interval)
+        formatter = AutoDateFormatter(locator)
+        minor_locator = WeekdayLocator(byweekday=WE)
+
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(formatter)
+        ax.xaxis.set_minor_locator(minor_locator)
+        ax.set_xlim(min_x, max_x)
+        ax.grid(which='major', axis='x', linestyle=':', lw=.5)
+
     ax.set_ylim(0, 104)
     ax.margins(0)
 
@@ -261,6 +277,65 @@ def stacked_plot(fpath, pes_vals, x_vals, until, region):
     plt.savefig(fpath)
 
 
+def plot_current_index_per_region_bar(data, population, num=10, extra_region=ALL_LABEL):
+
+    def add_if_missing(list_, entry):
+        if not any(val[0] == entry[0] for val in list_):
+            list_.append(entry)
+
+    def add_value_to_bars(bars):
+        for bar in bars:
+            bar_height = bar.get_height()
+            ax.annotate(
+                '{}'.format(bar_height),
+                xy=(bar.get_x() + bar.get_width() * 0.5, bar_height),
+                xytext=(0, 2),
+                textcoords="offset points",
+                ha='center',
+                va='bottom',
+                rotation=20,
+                color=score_color(bar_height),
+            )
+
+    region_last = {
+        region: max(data[region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
+        for region, values in data.items()
+    }
+
+    region_pes = [
+        (region, Pes(last_day, data[region], population[region]))
+        for region, last_day in region_last.items()
+    ]
+    region_pes_sorted = sorted(region_pes, key=lambda x: x[1].score)
+
+    yesterday = date.today() - timedelta(days=1)
+
+    fpath = "pes_podle_regionu_{}.png".format(yesterday.strftime("%d.%m.%Y"))
+
+    to_plot = region_pes_sorted[:num] + region_pes_sorted[-1*num:]
+    if extra_region != ALL_LABEL:
+        extra_region_bar = list(filter(lambda x: x[0] == extra_region, region_pes_sorted))[0]
+        add_if_missing(to_plot, extra_region_bar)
+
+    all_regions = list(filter(lambda x: x[0] == ALL_LABEL, region_pes_sorted))[0]
+    add_if_missing(to_plot, all_regions)
+
+    to_plot.sort(key=lambda x: x[1].score)
+
+    fig, ax = init_plot(region_pes)
+    plt.title("PES podle regionu ({:s}; {} nejlepších a nejhorších) ".format(
+        yesterday.strftime("%d.%m.%Y"), num))
+
+    for region, pes in to_plot:
+        color = score_color(pes.score)
+        edge_color = 'black' if region == ALL_LABEL or region == extra_region else None
+        bars = ax.bar([region], [pes.score], color=color, edgecolor=edge_color)
+        add_value_to_bars(bars)
+
+    logger.info('Plotting regions plot into file %s', fpath)
+    plt.savefig(fpath)
+
+
 def load_population(fpath):
     population = {}
     with open(fpath) as f:
@@ -312,13 +387,14 @@ def main():
     args = parser.parse_args()
     configure_logger()
 
-    #fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
+    # fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
     if args.region != ALL_LABEL and args.region not in data:
         raise PesValueError(
-            f'"{args.region}" is not a valid region name. Available regions: {", ".join(sorted(data))}'
+            f'"{args.region}" is not a valid region name. '
+            f'Available regions: {", ".join(sorted(data))}'
         )
 
     pes = {}
@@ -336,6 +412,8 @@ def main():
         args.days, args.region, str(until)), pes, x_dates, until, args.region)
     stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
         args.days, args.region, str(until)), pes, x_dates, until, args.region)
+
+    plot_current_index_per_region_bar(data, population, num=7, extra_region=args.region)
 
 
 if __name__ == '__main__':
