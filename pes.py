@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from argparse import ArgumentParser
 from collections import namedtuple
 import csv
 from datetime import date, timedelta
 import math
-import sys
 import urllib.request
 
 import matplotlib.pyplot as plt
@@ -30,7 +30,6 @@ plt.rcParams['savefig.dpi'] = 200
 
 # TODO configurable guesstimate?
 TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
-PES_PERIOD = int(sys.argv[1])  # TODO use argparse
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.3.0"  # TODO release 0.3.0
 DATA_FILEPATH = 'data/covid_orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
@@ -196,7 +195,7 @@ def init_plot(x_vals):
 def line_plot(fpath, pes_vals, x_vals, until):
     fig, ax = init_plot(x_vals)
     # TODO change title, include region
-    plt.title("PES (posledních {:d} dní k {:s})".format(PES_PERIOD, until.strftime("%d.%m.%Y")))
+    plt.title("PES (k {:s})".format(until.strftime("%d.%m.%Y")))
 
     y = [pes_vals[x].score for x in x_vals]
     ax.plot(x_vals, y, color='black')
@@ -225,8 +224,8 @@ def stacked_plot(fpath, pes_vals, x_vals, until):
     y2 = [pes_vals[x].score_repro for x in x_vals]
     y3 = [pes_vals[x].score_positivity for x in x_vals]
 
-    plt.title("PES (posledních {:d} dní k {:s}) skládaný".format(
-        PES_PERIOD, until.strftime("%d.%m.%Y")))
+    plt.title("PES (k {:s}) skládaný".format(
+        until.strftime("%d.%m.%Y")))
 
     plot_collection = ax.stackplot(
         x_vals,
@@ -288,6 +287,10 @@ def fetch_epidemic_data(out_fpath):
 
 
 def main():
+    parser = ArgumentParser(description='generate PES score chart')
+    parser.add_argument('days', type=int, default=60, help='number of past days to plot')
+    args = parser.parse_args()
+
     fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
@@ -295,7 +298,7 @@ def main():
     pes = {}
     x_dates = []
     until = max(data[ALL_LABEL].keys()) - timedelta(days=1)  # ignore last (incomplete) day
-    since = until - timedelta(days=PES_PERIOD)
+    since = until - timedelta(days=args.days)
     region = ALL_LABEL  # TODO get region from arg
 
     for i in range((until - since).days + 1):
@@ -303,8 +306,8 @@ def main():
         x_dates.append(today)
         pes[today] = Pes(today, data[region], population[region])
 
-    line_plot('pes_{:d}d_{:s}.png'.format(PES_PERIOD, str(until)), pes, x_dates, until)
-    stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(PES_PERIOD, str(until)), pes, x_dates, until)
+    line_plot('pes_{:d}d_{:s}.png'.format(args.days, str(until)), pes, x_dates, until)
+    stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(args.days, str(until)), pes, x_dates, until)
 
 
 if __name__ == '__main__':
