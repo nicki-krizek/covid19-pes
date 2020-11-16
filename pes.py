@@ -192,10 +192,10 @@ def init_plot(x_vals):
 
 
 # TODO reorder args, remove until?
-def line_plot(fpath, pes_vals, x_vals, until):
+def line_plot(fpath, pes_vals, x_vals, until, region):
     fig, ax = init_plot(x_vals)
     # TODO change title, include region
-    plt.title("PES (k {:s})".format(until.strftime("%d.%m.%Y")))
+    plt.title("PES ({:s} k {:s})".format(region, until.strftime("%d.%m.%Y")))
 
     y = [pes_vals[x].score for x in x_vals]
     ax.plot(x_vals, y, color='black')
@@ -215,7 +215,7 @@ def line_plot(fpath, pes_vals, x_vals, until):
     plt.savefig(fpath)
 
 
-def stacked_plot(fpath, pes_vals, x_vals, until):
+def stacked_plot(fpath, pes_vals, x_vals, until, region):
     fig, ax = init_plot(x_vals)
 
     y = [pes_vals[x].score for x in x_vals]
@@ -224,8 +224,8 @@ def stacked_plot(fpath, pes_vals, x_vals, until):
     y2 = [pes_vals[x].score_repro for x in x_vals]
     y3 = [pes_vals[x].score_positivity for x in x_vals]
 
-    plt.title("PES (k {:s}) skládaný".format(
-        until.strftime("%d.%m.%Y")))
+    plt.title("PES ({:s} k {:s}) skládaný".format(
+        region, until.strftime("%d.%m.%Y")))
 
     plot_collection = ax.stackplot(
         x_vals,
@@ -289,25 +289,29 @@ def fetch_epidemic_data(out_fpath):
 def main():
     parser = ArgumentParser(description='generate PES score chart')
     parser.add_argument('days', type=int, default=60, help='number of past days to plot')
+    parser.add_argument(
+        '--region', type=str, default=ALL_LABEL, help='limit data to selected region')
     args = parser.parse_args()
 
-    fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
+    #fetch_epidemic_data(DATA_FILEPATH)  # TODO make optional
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
     pes = {}
     x_dates = []
-    until = max(data[ALL_LABEL].keys()) - timedelta(days=1)  # ignore last (incomplete) day
+    until = max(data[args.region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
     since = until - timedelta(days=args.days)
-    region = ALL_LABEL  # TODO get region from arg
+    region = args.region
 
     for i in range((until - since).days + 1):
         today = since + timedelta(days=i)
         x_dates.append(today)
         pes[today] = Pes(today, data[region], population[region])
 
-    line_plot('pes_{:d}d_{:s}.png'.format(args.days, str(until)), pes, x_dates, until)
-    stacked_plot('pes_{:d}d_{:s}_skladany.png'.format(args.days, str(until)), pes, x_dates, until)
+    line_plot('pes_{:d}d_{:s}_{:s}.png'.format(
+        args.days, args.region, str(until)), pes, x_dates, until, args.region)
+    stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
+        args.days, args.region, str(until)), pes, x_dates, until, args.region)
 
 
 if __name__ == '__main__':
