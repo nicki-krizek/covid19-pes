@@ -177,7 +177,7 @@ def score_color(score):
     return "forestgreen"
 
 
-def init_plot(x_vals):
+def init_plot(x_vals, today=None):
     fig, ax = plt.subplots(1)
 
     plt.xlabel("datum")
@@ -185,6 +185,9 @@ def init_plot(x_vals):
 
     min_x = min(x_vals)
     max_x = max(x_vals)
+
+    if today is None:
+        today = max_x
 
     if isinstance(min_x, date):
         # format only for dates
@@ -217,6 +220,8 @@ def init_plot(x_vals):
 
     fig.autofmt_xdate()
     fig.text(0.02, 0.02, "{:s}".format(SRC_LINK), fontsize='xx-small', color='gray')
+    fig.text(0.73, 0.95, "{:s}".format('aportováno: '), fontsize='small', color='gray')
+    fig.text(0.85, 0.95, "{:s}".format(today.strftime("%d.%m.%Y")), fontsize='small', fontweight='bold', color='gray')
     fig.text(0.95, 0.02, "CC0", fontsize='small', color='gray')
 
     return fig, ax
@@ -225,7 +230,7 @@ def init_plot(x_vals):
 def line_plot(fpath, region_pes):
     x_vals = sorted(region_pes[list(region_pes.keys())[0]].keys())
     fig, ax = init_plot(x_vals)
-    plt.title("PES (k {:s})".format(x_vals[-1].strftime("%d.%m.%Y")))
+    plt.title("PES")
 
     for region, pes in region_pes.items():
         y = [pes[x].score for x in x_vals]
@@ -259,7 +264,7 @@ def stacked_plot(fpath, pes, region):
     y2 = [pes[x].score_repro for x in x_vals]
     y3 = [pes[x].score_positivity for x in x_vals]
 
-    plt.title("PES ({:s} k {:s})".format(region, x_vals[-1].strftime("%d.%m.%Y")))
+    plt.title("PES ({:s})".format(region))
 
     plot_collection = ax.stackplot(
         x_vals,
@@ -320,9 +325,8 @@ def bar_plot_regions(data, population, today, num=10, extra_regions=None):
 
     to_plot.sort(key=lambda x: x[1].score)
 
-    fig, ax = init_plot(region_pes)
-    plt.title("PES podle regionu ({:s}; {} nejlepších a nejhorších) ".format(
-        today.strftime("%d.%m.%Y"), num))
+    fig, ax = init_plot(region_pes, today)
+    plt.title("PES: aktuální hodnota ({} nejlepších a nejhorších oblastí)".format(num))
 
     for region, pes in to_plot:
         color = score_color(pes.score)
