@@ -39,6 +39,23 @@ POPULATION_FILEPATH = 'data/obyvatele.csv'
 DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv'  # noqa
 ALL_LABEL = 'Celá ČR'
 MIN_PES_DATE = date.fromisoformat('2020-03-01') + timedelta(days=14)
+FPATH_CZ_TRANSLATE = str.maketrans({
+    'ř': 'r',
+    'í': 'i',
+    'š': 's',
+    'ž': 'z',
+    'ť': 't',
+    'č': 'c',
+    'ý': 'y',
+    'ů': 'u',
+    'ň': 'n',
+    'ú': 'u',
+    'ě': 'e',
+    'ď': 'd',
+    'á': 'a',
+    'é': 'e',
+    'ó': 'o',
+})
 
 
 AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
@@ -239,6 +256,14 @@ def get_time_period_title(dates):
         return 'za {:d} dní'.format((until-since).days)
 
 
+def regions_to_fpath(regions):
+    names = []
+    for region in regions:
+        name = region.lower().translate(FPATH_CZ_TRANSLATE).replace(' ', '-')
+        names.append(name)
+    return "_{:s}".format('_'.join(names)) if names else ''
+
+
 def line_plot(region_pes):
     x_vals = sorted(region_pes[list(region_pes.keys())[0]].keys())
     fig, ax = init_plot(x_vals)
@@ -263,11 +288,16 @@ def line_plot(region_pes):
 
     plt.legend(loc='upper left', fontsize='xx-small')
 
+    until = x_vals[-1].isoformat()
+    days = (x_vals[-1] - x_vals[0]).days
+    regions_fpath = regions_to_fpath(region_pes.keys())
+    fpath = '{:s}_pes_{:d}d{:s}.png'.format(until, days, regions_fpath)
+
     logger.info('Plotting into file %s', fpath)
     plt.savefig(fpath)
 
 
-def stacked_plot(fpath, pes, region):
+def stacked_plot(pes, region):
     x_vals = sorted(pes.keys())
     fig, ax = init_plot(x_vals)
 
@@ -296,11 +326,16 @@ def stacked_plot(fpath, pes, region):
         loc='upper left',
         fontsize='xx-small')
 
+    until = x_vals[-1].isoformat()
+    days = (x_vals[-1] - x_vals[0]).days
+    regions_fpath = regions_to_fpath([region])
+    fpath = '{:s}_pes_{:d}d_skladany{:s}.png'.format(until, days, regions_fpath)
+
     logger.info('Plotting stacked plot into file %s', fpath)
     plt.savefig(fpath)
 
 
-def bar_plot_regions(data, population, today, num=10, extra_regions=None):
+def bar_plot_current(data, population, today, num=10, extra_regions=None):
     if extra_regions is None:
         extra_regions = []
 
@@ -328,7 +363,8 @@ def bar_plot_regions(data, population, today, num=10, extra_regions=None):
     ]
     region_pes_sorted = sorted(region_pes, key=lambda x: x[1].score)
 
-    fpath = "pes_podle_regionu_{}.png".format(today.strftime("%d.%m.%Y"))
+    region_fpath = regions_to_fpath(extra_regions)
+    fpath = "{:s}_pes_aktualni{:s}.png".format(today.isoformat(), region_fpath)
 
     to_plot = region_pes_sorted[:num] + region_pes_sorted[-1*num:]
     extra_regions = set(extra_regions + [ALL_LABEL])
@@ -449,7 +485,7 @@ def main():
     for region in regions:
         stacked_plot(region_pes[region], region)
 
-    bar_plot_regions(data, population, until, num=7, extra_regions=regions)
+    bar_plot_current(data, population, until, num=7, extra_regions=regions)
 
 
 if __name__ == '__main__':
