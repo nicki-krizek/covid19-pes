@@ -38,6 +38,7 @@ DATA_FILEPATH = 'data/covid_orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
 DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv'  # noqa
 ALL_LABEL = 'Celá ČR'
+MIN_PES_DATE = date.fromisoformat('2020-03-01') + timedelta(days=14)
 
 
 AgeGroup = namedtuple('AgeGroup', ['all', 'senior'])
@@ -180,7 +181,6 @@ def score_color(score):
 def init_plot(x_vals, today=None):
     fig, ax = plt.subplots(1)
 
-    plt.xlabel("datum")
     plt.ylabel("index rizika")
 
     min_x = min(x_vals)
@@ -191,6 +191,7 @@ def init_plot(x_vals, today=None):
 
     if isinstance(min_x, date):
         # format only for dates
+        plt.xlabel("datum")
         interval = math.ceil((max_x - min_x).days / (13 * 7))
         locator = WeekdayLocator(byweekday=WE, interval=interval)
         formatter = AutoDateFormatter(locator)
@@ -219,18 +220,30 @@ def init_plot(x_vals, today=None):
     ax.axhline(20, color='forestgreen', linestyle='--')
 
     fig.autofmt_xdate()
+    plt.setp(ax.get_xticklabels(), fontsize='small')
     fig.text(0.02, 0.02, "{:s}".format(SRC_LINK), fontsize='xx-small', color='gray')
     fig.text(0.73, 0.95, "{:s}".format('aportováno: '), fontsize='small', color='gray')
-    fig.text(0.85, 0.95, "{:s}".format(today.strftime("%d.%m.%Y")), fontsize='small', fontweight='bold', color='gray')
+    fig.text(0.85, 0.95, "{:s}".format(
+        today.strftime("%d.%m.%Y")), fontsize='small', fontweight='bold', color='gray')
     fig.text(0.95, 0.02, "CC0", fontsize='small', color='gray')
 
     return fig, ax
 
 
-def line_plot(fpath, region_pes):
+def get_time_period_title(dates):
+    since = min(dates)
+    until = max(dates)
+    if since == MIN_PES_DATE:
+        return 'od počátku epidemie'
+    else:
+        return 'za {:d} dní'.format((until-since).days)
+
+
+def line_plot(region_pes):
     x_vals = sorted(region_pes[list(region_pes.keys())[0]].keys())
     fig, ax = init_plot(x_vals)
-    plt.title("PES")
+
+    plt.title("PES: vývoj {:s}".format(get_time_period_title(x_vals)))
 
     for region, pes in region_pes.items():
         y = [pes[x].score for x in x_vals]
@@ -264,7 +277,7 @@ def stacked_plot(fpath, pes, region):
     y2 = [pes[x].score_repro for x in x_vals]
     y3 = [pes[x].score_positivity for x in x_vals]
 
-    plt.title("PES ({:s})".format(region))
+    plt.title("PES: vývoj {:s} ({:s})".format(get_time_period_title(x_vals), region))
 
     plot_collection = ax.stackplot(
         x_vals,
@@ -411,6 +424,8 @@ def main():
     # assume all regions have the same min and max date
     until = max(data[regions[0]].keys()) - timedelta(days=1)  # ignore last (incomplete) day
     min_since = min(data[regions[0]].keys()) + timedelta(days=14)
+    if min_since != MIN_PES_DATE:
+        raise PesValueError("Invalid dataset change: first data entry is expected to be 1.3.2020")
     if args.days == 0:
         since = min_since
     else:
@@ -430,11 +445,9 @@ def main():
                     f'missing data from {today.strftime("%d.%m.%Y")} for region "{region}"')
         region_pes[region] = pes
 
-    line_plot('pes_{:d}d_{:s}_{:s}.png'.format(
-        args.days, '_'.join(regions), str(until)), region_pes)
+    line_plot(region_pes)
     for region in regions:
-        stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
-            args.days, region, str(until)), region_pes[region], region)
+        stacked_plot(region_pes[region], region)
 
     bar_plot_regions(data, population, until, num=7, extra_regions=regions)
 
