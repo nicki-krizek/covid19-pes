@@ -282,11 +282,9 @@ def stacked_plot(fpath, pes, region):
     plt.savefig(fpath)
 
 
-def bar_plot_regions(data, population, num=10, today=None, extra_regions=None):
+def bar_plot_regions(data, population, today, num=10, extra_regions=None):
     if extra_regions is None:
         extra_regions = []
-    if today is None:
-        today = max(data[list(data.keys())[0]].keys()) - timedelta(days=1)  # ignore last day
 
     def add_if_missing(list_, entry):
         if not any(val[0] == entry[0] for val in list_):
@@ -434,7 +432,7 @@ def main():
         stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
             args.days, region, str(until)), region_pes[region], region)
 
-    bar_plot_regions(data, population, num=7, extra_regions=regions)
+    bar_plot_regions(data, population, until, num=7, extra_regions=regions)
 
 
 if __name__ == '__main__':
