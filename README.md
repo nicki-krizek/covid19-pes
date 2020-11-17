@@ -54,5 +54,5 @@ Projekt vyžaduje Python 3.6 a matplotlib.
 ## Licence
 
 - Kód: [GPLv3+](LICENSE.txt)
-- Obrázky: CC0 (public domain)
+- Obrázky: [CC0](https://creativecommons.org/publicdomain/zero/1.0/legalcode)
 - Počty obyvatel: [Podmínky užívání dat ČSÚ](https://www.czso.cz/csu/czso/podminky_pro_vyuzivani_a_dalsi_zverejnovani_statistickych_udaju_csu)
