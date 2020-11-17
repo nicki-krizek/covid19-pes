@@ -16,13 +16,13 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
   ČSÚ](https://vdb.czso.cz/vdbvo2/faces/cs/index.jsf?page=home) (k 31.12.2018,
   resp 31.12.2019)
 
-## Ukázky grafů
+## Ukázky diagramů
 
 ### Vývoj indexu rizika za 30 dní (srovnání celé ČR a Prahy)
 
 ![2020-11-16_pes_30d_cela-cr_praha.png](img/2020-11-16_pes_30d_cela-cr_praha.png)
 
-### Skládaný graf vývoje indexu rizika od počátku epidemie
+### Skládaný diagram vývoje indexu rizika od počátku epidemie
 
 ![2020-11-16_pes_246d_skladany_cela-cr.png](img/2020-11-16_pes_246d_skladany_cela-cr.png)
 
@@ -37,11 +37,11 @@ Projekt vyžaduje Python 3.6 a matplotlib.
 ### Příklady
 
 ```
-./pes.py                    # vykreslí grafy od začátku epidemie pro celou ČR
-./pes.py 30 --fetch         # aktualizuje dostupná data a vykreslí vývoj za 30 dní
-./pes.py 30 --region Praha  # vykreslí vývoj za 30 dní pro Prahu
+./pes.py                              # vykreslí diagramy od počátku epidemie pro celou ČR
+./pes.py 30 --fetch                   # aktualizuje dostupná data a vykreslí vývoj za 30 dní
+./pes.py 30 --region Praha            # vykreslí vývoj za 30 dní pro Prahu
 ./pes.py 30 --region 'Celá ČR' Praha  # vykreslí srovnání celé ČR a Prahy za 30 dní
-./pes.py --help             # zobrazí kompletní možnosti a dokumentaci
+./pes.py --help                       # zobrazí kompletní možnosti a dokumentaci
 ```
 
 ## Odkazy
