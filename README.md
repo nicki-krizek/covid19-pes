@@ -1,6 +1,6 @@
 # PES: Protiepidemický systém - COVID-19 ČR
 
-Projekt pro výpočet a vykreslovování indexu rizika Protiepidemického systému ČR
+Projekt pro výpočet a vykreslování indexu rizika Protiepidemického systému ČR
 (PES) z otevřených dat.
 
 ## Zdroje dat
@@ -22,7 +22,7 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
 
 ![2020-11-16_pes_30d_cela-cr_praha.png](img/2020-11-16_pes_30d_cela-cr_praha.png)
 
-### Skládaný diagram vývoje indexu rizika od počátku epidemie
+### Podrobný vývoj indexu rizika od počátku epidemie
 
 ![2020-11-16_pes_246d_skladany_cela-cr.png](img/2020-11-16_pes_246d_skladany_cela-cr.png)
 
