@@ -115,6 +115,10 @@ class Pes:
         if self.incidence14.senior > self.incidence14_prev7.senior:
             self.score_incidence_senior += 2
 
+        if region_data[day_prev5].incidence7.all == 0:
+            raise PesValueError(
+                "Insufficient data to calculate R-number for selected region(s). "
+                "Use smaller time interval.")
         self.repro = region_data[day].incidence7.all / region_data[day_prev5].incidence7.all
         self.score_repro = self._score_repro(self.repro)
 
