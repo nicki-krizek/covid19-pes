@@ -49,8 +49,10 @@ Projekt vyžaduje Python 3.6 a matplotlib.
 - [Protiepidemický systém ČR](https://onemocneni-aktualne.mzcr.cz/pes)
 - [Návod pro výpočet indexu rizika](https://koronavirus.mzcr.cz/wp-content/uploads/2020/11/Stru%C4%8Dn%C3%BD-n%C3%A1vod-pro-v%C3%BDpo%C4%8Det-indexu-rizika.pdf)
 - [Tisková zpráva PES](https://koronavirus.mzcr.cz/epidemiologickou-situaci-bude-nove-znazornovat-system-hodnoceni-pes/)
+- [COVID-19 v ČR: Otevřené datové sady a sady ke stažení](https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19)
 
 ## Licence
 
 - Kód: [GPLv3+](LICENSE.txt)
 - Obrázky: CC0 (public domain)
+- Počty obyvatel: [Podmínky užívání dat ČSÚ](https://www.czso.cz/csu/czso/podminky_pro_vyuzivani_a_dalsi_zverejnovani_statistickych_udaju_csu)
