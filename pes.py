@@ -24,12 +24,14 @@ import math
 import urllib.request
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+from matplotlib import cycler
 from matplotlib.dates import WE, WeekdayLocator, AutoDateFormatter
+from matplotlib.patches import Rectangle
 
 plt.rcParams['savefig.dpi'] = 200
+plt.rcParams['axes.prop_cycle'] = cycler(color=[
+    'black', 'tab:brown', 'tab:gray', 'tab:blue', 'tab:pink', 'tab:cyan'])
 
-# TODO configurable guesstimate?
 TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v0.3.0"  # TODO release 0.3.0
 DATA_FILEPATH = 'data/covid_orp.csv'
@@ -220,14 +222,14 @@ def init_plot(x_vals):
     return fig, ax
 
 
-# TODO reorder args, remove until?
-def line_plot(fpath, pes_vals, x_vals, until, region):
+def line_plot(fpath, region_pes):
+    x_vals = sorted(region_pes[list(region_pes.keys())[0]].keys())
     fig, ax = init_plot(x_vals)
-    # TODO change title, include region
-    plt.title("PES ({:s} k {:s})".format(region, until.strftime("%d.%m.%Y")))
+    plt.title("PES (k {:s})".format(x_vals[-1].strftime("%d.%m.%Y")))
 
-    y = [pes_vals[x].score for x in x_vals]
-    ax.plot(x_vals, y, color='black')
+    for region, pes in region_pes.items():
+        y = [pes[x].score for x in x_vals]
+        ax.plot(x_vals, y, label=region)
 
     tr = ax.transAxes
     patches = [
@@ -241,21 +243,23 @@ def line_plot(fpath, pes_vals, x_vals, until, region):
     for patch in patches:
         ax.add_patch(patch)
 
+    plt.legend(loc='upper left', fontsize='xx-small')
+
     logger.info('Plotting into file %s', fpath)
     plt.savefig(fpath)
 
 
-def stacked_plot(fpath, pes_vals, x_vals, until, region):
+def stacked_plot(fpath, pes, region):
+    x_vals = sorted(pes.keys())
     fig, ax = init_plot(x_vals)
 
-    y = [pes_vals[x].score for x in x_vals]
-    y0 = [pes_vals[x].score_incidence_all for x in x_vals]
-    y1 = [pes_vals[x].score_incidence_senior for x in x_vals]
-    y2 = [pes_vals[x].score_repro for x in x_vals]
-    y3 = [pes_vals[x].score_positivity for x in x_vals]
+    y = [pes[x].score for x in x_vals]
+    y0 = [pes[x].score_incidence_all for x in x_vals]
+    y1 = [pes[x].score_incidence_senior for x in x_vals]
+    y2 = [pes[x].score_repro for x in x_vals]
+    y3 = [pes[x].score_positivity for x in x_vals]
 
-    plt.title("PES ({:s} k {:s}) skládaný".format(
-        region, until.strftime("%d.%m.%Y")))
+    plt.title("PES ({:s} k {:s})".format(region, x_vals[-1].strftime("%d.%m.%Y")))
 
     plot_collection = ax.stackplot(
         x_vals,
@@ -278,7 +282,11 @@ def stacked_plot(fpath, pes_vals, x_vals, until, region):
     plt.savefig(fpath)
 
 
-def plot_current_index_per_region_bar(data, population, num=10, extra_region=ALL_LABEL):
+def bar_plot_regions(data, population, num=10, today=None, extra_regions=None):
+    if extra_regions is None:
+        extra_regions = []
+    if today is None:
+        today = max(data[list(data.keys())[0]].keys()) - timedelta(days=1)  # ignore last day
 
     def add_if_missing(list_, entry):
         if not any(val[0] == entry[0] for val in list_):
@@ -298,38 +306,29 @@ def plot_current_index_per_region_bar(data, population, num=10, extra_region=ALL
                 color=score_color(bar_height),
             )
 
-    region_last = {
-        region: max(data[region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
-        for region, values in data.items()
-    }
-
     region_pes = [
-        (region, Pes(last_day, data[region], population[region]))
-        for region, last_day in region_last.items()
+        (region, Pes(today, data[region], population[region]))
+        for region in data.keys()
     ]
     region_pes_sorted = sorted(region_pes, key=lambda x: x[1].score)
 
-    yesterday = date.today() - timedelta(days=1)
-
-    fpath = "pes_podle_regionu_{}.png".format(yesterday.strftime("%d.%m.%Y"))
+    fpath = "pes_podle_regionu_{}.png".format(today.strftime("%d.%m.%Y"))
 
     to_plot = region_pes_sorted[:num] + region_pes_sorted[-1*num:]
-    if extra_region != ALL_LABEL:
+    extra_regions = set(extra_regions + [ALL_LABEL])
+    for extra_region in extra_regions:
         extra_region_bar = list(filter(lambda x: x[0] == extra_region, region_pes_sorted))[0]
         add_if_missing(to_plot, extra_region_bar)
-
-    all_regions = list(filter(lambda x: x[0] == ALL_LABEL, region_pes_sorted))[0]
-    add_if_missing(to_plot, all_regions)
 
     to_plot.sort(key=lambda x: x[1].score)
 
     fig, ax = init_plot(region_pes)
     plt.title("PES podle regionu ({:s}; {} nejlepších a nejhorších) ".format(
-        yesterday.strftime("%d.%m.%Y"), num))
+        today.strftime("%d.%m.%Y"), num))
 
     for region, pes in to_plot:
         color = score_color(pes.score)
-        edge_color = 'black' if region == ALL_LABEL or region == extra_region else None
+        edge_color = 'black' if region in extra_regions else None
         bars = ax.bar([region], [pes.score], color=color, edgecolor=edge_color)
         add_value_to_bars(bars)
 
@@ -382,11 +381,11 @@ def configure_logger():
 
 
 def main():
-    parser = ArgumentParser(description='generate PES score chart')
+    parser = ArgumentParser(description='generate PES score charts')
     parser.add_argument('days', type=int, default=0, nargs='?',
                         help='number of past days to plot')
-    parser.add_argument(
-        '--region', type=str, default=ALL_LABEL, help='limit data to selected region')
+    parser.add_argument('--region', type=str, default=[ALL_LABEL], nargs='*',
+                        help='plot selected region(s)')
     parser.add_argument(
         '--fetch', action='store_true', help='download updated dataset')
     args = parser.parse_args()
@@ -397,18 +396,19 @@ def main():
     data = load_epidemic_data(DATA_FILEPATH)
     population = load_population(POPULATION_FILEPATH)
 
-    if args.region != ALL_LABEL and args.region not in data:
-        raise PesValueError(
-            f'"{args.region}" is not a valid region name. '
-            f'Available regions: {", ".join(sorted(data))}'
-        )
+    for region in args.region:
+        if region not in data:
+            raise PesValueError(
+                f'"{args.region}" is not a valid region name. '
+                f'Available regions: {", ".join(sorted(data))}'
+            )
 
-    pes = {}
-    x_dates = []
-    region = args.region
+    region_pes = {}
+    regions = args.region
 
-    until = max(data[args.region].keys()) - timedelta(days=1)  # ignore last (incomplete) day
-    min_since = min(data[args.region].keys()) + timedelta(days=14)
+    # assume all regions have the same min and max date
+    until = max(data[regions[0]].keys()) - timedelta(days=1)  # ignore last (incomplete) day
+    min_since = min(data[regions[0]].keys()) + timedelta(days=14)
     if args.days == 0:
         since = min_since
     else:
@@ -417,17 +417,24 @@ def main():
             raise PesValueError("Not enough historical data. Max days: {:d}".format(
                 (until - min_since).days))
 
-    for i in range((until - since).days + 1):
-        today = since + timedelta(days=i)
-        x_dates.append(today)
-        pes[today] = Pes(today, data[region], population[region])
+    for region in regions:
+        pes = {}
+        for i in range((until - since).days + 1):
+            today = since + timedelta(days=i)
+            try:
+                pes[today] = Pes(today, data[region], population[region])
+            except KeyError:
+                raise PesValueError(
+                    f'missing data from {today.strftime("%d.%m.%Y")} for region "{region}"')
+        region_pes[region] = pes
 
     line_plot('pes_{:d}d_{:s}_{:s}.png'.format(
-        args.days, args.region, str(until)), pes, x_dates, until, args.region)
-    stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
-        args.days, args.region, str(until)), pes, x_dates, until, args.region)
+        args.days, '_'.join(regions), str(until)), region_pes)
+    for region in regions:
+        stacked_plot('pes_{:d}d_{:s}_{:s}_skladany.png'.format(
+            args.days, region, str(until)), region_pes[region], region)
 
-    plot_current_index_per_region_bar(data, population, num=7, extra_region=args.region)
+    bar_plot_regions(data, population, num=7, extra_regions=regions)
 
 
 if __name__ == '__main__':
