@@ -1,4 +1,4 @@
-# PES: Proti epidemický systém - COVID-19 ČR
+# PES: Protiepidemický systém - COVID-19 ČR
 
 Projekt pro výpočet a vykreslovování indexu rizika Protiepidemického systému ČR
 (PES) z otevřených dat.
@@ -18,17 +18,17 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
 
 ## Ukázky grafů
 
-### Posledních 60 dní - skládaný
+### Vývoj indexu rizika za 30 dní (srovnání celé ČR a Prahy)
 
-![PES 60d 2020-11-12](img/pes_60d_2020-11-12_skladany.png)
+![2020-11-16_pes_30d_cela-cr_praha.png](img/2020-11-16_pes_30d_cela-cr_praha.png)
 
-### Posledních 235 dní
+### Skládaný graf vývoje indexu rizika od počátku epidemie
 
-![PES 235d 2020-11-12](img/pes_235d_2020-11-12.png)
+![2020-11-16_pes_246d_skladany_cela-cr.png](img/2020-11-16_pes_246d_skladany_cela-cr.png)
 
-### Index rizika dle regionu (nejhorší a nejlepší)
+### Srovnání indexů rizika dle oblastí (nejhorší a nejlepší)
 
-![PES Podle regionu 2020-11-15](img/pes_podle_regionu_15.11.2020.png)
+![2020-11-16_pes_aktualni_cela-cr.png](img/2020-11-16_pes_aktualni_cela-cr.png)
 
 ## Použití
 
@@ -37,10 +37,11 @@ Projekt vyžaduje Python 3.6 a matplotlib.
 ### Příklady
 
 ```
-./pes.py                    # vykresli grafy od zacatku epidemie pro celou CR
-./pes.py 30 --fetch         # aktualizuje dostupna data a vykresli poslednich 30 dni
-./pes.py 30 --region Praha  # vykresli grafy za poslednich 30 dni pro Prahu
-./pes.py --help             # zobrazi kompletni moznosti a dokumentaci
+./pes.py                    # vykreslí grafy od začátku epidemie pro celou ČR
+./pes.py 30 --fetch         # aktualizuje dostupná data a vykreslí vývoj za 30 dní
+./pes.py 30 --region Praha  # vykreslí vývoj za 30 dní pro Prahu
+./pes.py 30 --region 'Celá ČR' Praha  # vykreslí srovnání celé ČR a Prahy za 30 dní
+./pes.py --help             # zobrazí kompletní možnosti a dokumentaci
 ```
 
 ## Odkazy
