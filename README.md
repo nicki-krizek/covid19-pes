@@ -10,7 +10,7 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
 
 - [COVID-19: Přehled epidemiologické situace dle hlášení krajských hygienických
   stanic podle
-  ORP](https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv)
+  ORP](https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.csv)
   z [COVID-19 API v2](https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19)
 - Věkové složení obyvatelstva dle ORP z [Veřejné databáze
   ČSÚ](https://vdb.czso.cz/vdbvo2/faces/cs/index.jsf?page=home) (k 31.12.2018,

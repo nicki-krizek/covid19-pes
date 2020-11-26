@@ -34,9 +34,9 @@ plt.rcParams['axes.prop_cycle'] = cycler(color=[
 
 TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.0"
-DATA_FILEPATH = 'data/covid_orp.csv'
+DATA_FILEPATH = 'data/orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
-DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/account/verejne-distribuovana-data/file/dip%252Fweb_orp.csv'  # noqa
+DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.csv'  # noqa
 ALL_LABEL = 'Celá ČR'
 MIN_PES_DATE = date.fromisoformat('2020-03-01') + timedelta(days=14)
 FPATH_CZ_TRANSLATE = str.maketrans({
@@ -407,7 +407,7 @@ def load_population(fpath):
 def load_epidemic_data(fpath):
     data = {}
     with open(fpath) as f:
-        reader = csv.DictReader(f, delimiter=';')
+        reader = csv.DictReader(f, delimiter=',')
         for row in reader:
             orp_data = data.setdefault(row['orp_nazev'], {})
             today = date.fromisoformat(row['datum'])
