@@ -20,15 +20,15 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
 
 ### Vývoj indexu rizika za 30 dní (srovnání celé ČR a Prahy)
 
-![2020-11-16_pes_30d_cela-cr_praha.png](img/2020-11-16_pes_30d_cela-cr_praha.png)
+![2020-11-25_pes_30d_cela-cr_praha.png](img/2020-11-25_pes_30d_cela-cr_praha.png)
 
 ### Podrobný vývoj indexu rizika od počátku epidemie
 
-![2020-11-16_pes_246d_skladany_cela-cr.png](img/2020-11-16_pes_246d_skladany_cela-cr.png)
+![2020-11-25_pes_255d_skladany_cela-cr.png](img/2020-11-25_pes_255d_skladany_cela-cr.png)
 
 ### Srovnání indexů rizika dle oblastí (nejhorší a nejlepší)
 
-![2020-11-16_pes_aktualni_cela-cr.png](img/2020-11-16_pes_aktualni_cela-cr.png)
+![2020-11-25_pes_aktualni_cela-cr.png](img/2020-11-25_pes_aktualni_cela-cr.png)
 
 ## Použití
 

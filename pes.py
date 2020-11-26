@@ -33,7 +33,7 @@ plt.rcParams['axes.prop_cycle'] = cycler(color=[
     'black', 'tab:brown', 'tab:gray', 'tab:blue', 'tab:pink', 'tab:cyan'])
 
 TESTS_NEW_GUESSTIMATE = 0.98  # assume what number of tests are new tests (not re-tests)
-SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.0"
+SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.1"
 DATA_FILEPATH = 'data/orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
 DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.csv'  # noqa
