@@ -32,7 +32,7 @@ plt.rcParams['savefig.dpi'] = 200
 plt.rcParams['axes.prop_cycle'] = cycler(color=[
     'black', 'tab:brown', 'tab:gray', 'tab:blue', 'tab:pink', 'tab:cyan'])
 
-TESTS_NEW_GUESSTIMATE = 0.95  # assume 95% of tests are new tests (not re-tests)
+TESTS_NEW_GUESSTIMATE = 0.98  # assume what number of tests are new tests (not re-tests)
 SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.0"
 DATA_FILEPATH = 'data/orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
