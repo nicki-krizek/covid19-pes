@@ -33,7 +33,7 @@ plt.rcParams['axes.prop_cycle'] = cycler(color=[
     'black', 'tab:brown', 'tab:gray', 'tab:blue', 'tab:pink', 'tab:cyan'])
 
 TESTS_NEW_GUESSTIMATE = 1.0  # assume what number of tests are new tests (not re-tests)
-SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.2"
+SRC_LINK = "https://github.com/tomaskrizek/covid19-pes/tree/v1.0.3"
 DATA_FILEPATH = 'data/orp.csv'
 POPULATION_FILEPATH = 'data/obyvatele.csv'
 DATA_URL = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/orp.csv'  # noqa
@@ -128,11 +128,12 @@ class Pes:
 
     @property
     def score(self):
-        return (
+        score = (
             self.score_incidence_all +
             self.score_incidence_senior +
             self.score_repro +
             self.score_positivity)
+        return score if score <= 100 else 100
 
     @classmethod
     def _score_incidence(cls, incidence_per_100k):
@@ -224,7 +225,7 @@ def init_plot(x_vals, today=None):
         ax.set_xlim(min_x, max_x)
         ax.grid(which='major', axis='x', linestyle=':', lw=.5)
 
-    ax.set_ylim(0, 104)
+    ax.set_ylim(0, 100)
     ax.margins(0)
 
     ax.set_yticks([0, 20, 40, 60, 75, 100])
@@ -280,11 +281,11 @@ def line_plot(region_pes):
 
     tr = ax.transAxes
     patches = [
-        Rectangle((0, 0), 1, 20/104, transform=tr, facecolor="forestgreen", alpha=0.4),
-        Rectangle((0, 20/104), 1, 20/104, transform=tr, facecolor="gold", alpha=0.4),
-        Rectangle((0, 40/104), 1, 20/104, transform=tr, facecolor="darkorange", alpha=0.4),
-        Rectangle((0, 60/104), 1, 15/104, transform=tr, facecolor="crimson", alpha=0.4),
-        Rectangle((0, 75/104), 1, 29/104, transform=tr, facecolor="indigo", alpha=0.4),
+        Rectangle((0, 0), 1, 20/100, transform=tr, facecolor="forestgreen", alpha=0.4),
+        Rectangle((0, 20/100), 1, 20/100, transform=tr, facecolor="gold", alpha=0.4),
+        Rectangle((0, 40/100), 1, 20/100, transform=tr, facecolor="darkorange", alpha=0.4),
+        Rectangle((0, 60/100), 1, 15/100, transform=tr, facecolor="crimson", alpha=0.4),
+        Rectangle((0, 75/100), 1, 29/100, transform=tr, facecolor="indigo", alpha=0.4),
     ]
 
     for patch in patches:
@@ -350,15 +351,21 @@ def bar_plot_current(data, population, today, num=10, extra_regions=None):
     def add_value_to_bars(bars):
         for bar in bars:
             bar_height = bar.get_height()
+            x = bar.get_x() + bar.get_width() * 0.5
+            y = bar_height
+            color = score_color(bar_height)
+            if bar_height > 95:
+                y = 90
+                color = 'white'
             ax.annotate(
                 '{}'.format(bar_height),
-                xy=(bar.get_x() + bar.get_width() * 0.5, bar_height),
+                xy=(x, y),
                 xytext=(0, 2),
                 textcoords="offset points",
                 ha='center',
                 va='bottom',
                 rotation=20,
-                color=score_color(bar_height),
+                color=color,
             )
 
     region_pes = [
