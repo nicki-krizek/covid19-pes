@@ -3,6 +3,8 @@
 Projekt pro výpočet a vykreslování indexu rizika Protiepidemického systému ČR
 (PES) z otevřených dat.
 
+**Výpočet se řídí metodikou, která byla platná do 31.12.2020.**
+
 ## Zdroje dat
 
 Vzhledem k použitým zdrojům dat se může výsledný index rizika mírně odlišovat
@@ -20,19 +22,19 @@ od [oficiálního indexu rizika](https://onemocneni-aktualne.mzcr.cz/pes).
 
 ### Vývoj indexu rizika za 30 dní (srovnání celé ČR a Prahy)
 
-![PES_30d_cela-cr_praha](img/2020-12-16_pes_30d_cela-cr_praha.png)
+![PES_30d_cela-cr_praha](img/2020-12-30_pes_30d_cela-cr_praha.png)
 
 ### Podrobný vývoj indexu rizika za 30 dní
 
-![PES_30d_skladany_cela-cr](img/2020-12-16_pes_30d_skladany_cela-cr.png)
+![PES_30d_skladany_cela-cr](img/2020-12-30_pes_30d_skladany_cela-cr.png)
 
 ### Podrobný vývoj indexu rizika od počátku epidemie
 
-![PES_all_skladany_cela-cr](img/2020-12-16_pes_276d_skladany_cela-cr.png)
+![PES_all_skladany_cela-cr](img/2020-12-30_pes_290d_skladany_cela-cr.png)
 
 ### Srovnání indexů rizika dle oblastí (nejhorší a nejlepší)
 
-![PES_aktualni_oblasti](img/2020-12-16_pes_aktualni_cela-cr_praha_brno.png)
+![PES_aktualni_oblasti](img/2020-12-30_pes_aktualni_cela-cr_praha_brno.png)
 
 ## Použití
 
